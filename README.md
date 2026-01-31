@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Elamriz - Premium Refurbished Hardware Marketplace
 
-## Getting Started
+**Elamriz** is a modern, high-end e-commerce platform specializing in premium refurbished hardware. Built with a focus on performance, sustainability, and an elegant user experience inspired by premium tech brands.
 
-First, run the development server:
+## ✨ Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Premium UI/UX**: Clean, modern design with smooth animations using Framer Motion.
+- **Product Gallery**: High-performance product discovery with advanced filtering and search.
+- **Shopping Cart & Checkout**: Seamless shopping experience with a dedicated checkout flow.
+- **Admin Panel**: Complete backend interface for managing:
+  - Products (Inventory, Pricing, Specifications)
+  - Orders & Tracking
+  - Categories
+- **Secure Payments**: Integrated with **Mollie Payments** for safe and reliable transactions.
+- **Robust Backend**: Powered by **Supabase** (PostgreSQL) for real-time data and authentication.
+- **SEO Optimized**: Fully optimized for search engines with dynamic metadata and sitemaps.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Frontend**: [Next.js 15](https://nextjs.org/) (App Router), React 19, TypeScript
+- **Styling**: Tailwind CSS 4, Lucide React (Icons)
+- **Animations**: Framer Motion
+- **State Management**: Zustand
+- **Backend/Database**: [Supabase](https://supabase.com/)
+- **Payments**: [Mollie API](https://www.mollie.com/)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠️ Getting Started
 
-## Learn More
+### Prerequisites
 
-To learn more about Next.js, take a look at the following resources:
+- Node.js (Latest LTS)
+- A Supabase project
+- A Mollie account (for payments)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Installation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/elamriz-shop.git
+   cd elamriz-shop
+   ```
 
-## Deploy on Vercel
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. **Set up environment variables:**
+   Create a `.env.local` file in the root directory and add your credentials:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   MOLLIE_API_KEY=your_mollie_api_key
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open the application:**
+   Visit [http://localhost:3000](http://localhost:3000)
+
+## 📁 Project Structure
+
+- `app/` - Next.js App Router (Pages, API routes, Layouts)
+- `components/` - Reusable UI components (Home, Shop, Layout, Admin)
+- `lib/` - Utility functions, Supabase client, and API helpers
+- `store/` - Zustand store for state management
+- `public/` - Static assets (images, fonts)
+
+## ⚖️ License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+Built with ❤️ by [Zakariyae](https://github.com/elamriz)
