@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCartStore } from "@/store/cartStore";
 import { ShoppingBag, Search, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 
-export const Navbar = () => {
+function NavbarContent() {
     const totalItems = useCartStore((state) => state.totalItems());
     const toggleCart = useCartStore((state) => state.toggleCart);
     const [scrolled, setScrolled] = useState(false);
@@ -140,5 +140,21 @@ export const Navbar = () => {
                 )}
             </AnimatePresence>
         </>
+    );
+}
+
+export const Navbar = () => {
+    return (
+        <Suspense fallback={
+            <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-black/5 py-4">
+                <div className="container-wide flex items-center justify-between">
+                    <Link href="/" className="text-xl font-semibold tracking-tight">
+                        Elamriz.
+                    </Link>
+                </div>
+            </nav>
+        }>
+            <NavbarContent />
+        </Suspense>
     );
 };
