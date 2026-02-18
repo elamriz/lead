@@ -12,36 +12,51 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Missing payment ID" }, { status: 400 });
         }
 
-        const payment = await mollieClient.payments.get(paymentId);
-        const orderId = (payment.metadata as any)?.order_id;
+        if (paymentId.startsWith('ord_')) {
+            const order = await mollieClient.orders.get(paymentId);
+            const supabaseOrderId = (order.metadata as any)?.order_id;
 
-        if (!orderId) {
-            console.error("No order ID in metadata");
-            return NextResponse.json({ error: "Invalid payment metadata" }, { status: 400 });
+            if (!supabaseOrderId) {
+                return NextResponse.json({ error: "Invalid order metadata" }, { status: 400 });
+            }
+
+            let status = 'pending';
+            if (order.status === 'paid' || order.status === 'authorized' || order.status === 'completed' || order.status === 'shipping') {
+                status = 'paid';
+            } else if (order.status === 'canceled' || order.status === 'expired') {
+                status = 'canceled';
+            }
+
+            await supabase
+                .from('orders')
+                .update({ status: status })
+                .eq('id', supabaseOrderId);
+
+            return NextResponse.json({ received: true });
+        } else {
+            const payment = await mollieClient.payments.get(paymentId);
+            const orderId = (payment.metadata as any)?.order_id;
+
+            if (!orderId) {
+                return NextResponse.json({ error: "Invalid payment metadata" }, { status: 400 });
+            }
+
+            let status = 'pending';
+            if (payment.status === 'paid') {
+                status = 'paid';
+            } else if (payment.status === 'canceled' || payment.status === 'expired') {
+                status = 'canceled';
+            } else if (payment.status === 'failed') {
+                status = 'failed';
+            }
+
+            await supabase
+                .from('orders')
+                .update({ status: status })
+                .eq('id', orderId);
+
+            return NextResponse.json({ received: true });
         }
-
-        let status = 'pending';
-        if (payment.status === 'paid') {
-            status = 'paid';
-        } else if (payment.status === 'canceled' || payment.status === 'expired') {
-            status = 'canceled';
-        } else if (payment.status === 'failed') {
-            status = 'failed';
-        }
-
-        // Update the order in Supabase
-        const { error } = await supabase
-            .from('orders')
-            .update({ status: status })
-            .eq('id', orderId);
-
-        if (error) {
-            console.error("Supabase Update Error:", error);
-            // Even if DB fails, return 200 to Mollie so they stop retrying? 
-            // Better to return 500 so they retry if it's transient, but for this MVP let's return 200 to acknowledge.
-        }
-
-        return NextResponse.json({ received: true });
 
     } catch (error: any) {
         console.error("Webhook Error:", error);

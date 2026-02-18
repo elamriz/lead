@@ -29,44 +29,83 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
         }
 
-        // 3. Create Payment with Mollie
+        // 3. Create Order with Mollie (required for EcoChèques/Vouchers)
         // We use the absolute URL for redirect
         const protocol = req.headers.get('x-forwarded-proto') || 'http';
         const host = req.headers.get('host');
         const baseUrl = `${protocol}://${host}`;
 
-        const paymentPayload: any = {
+        const orderPayload: any = {
             amount: {
                 currency: 'EUR',
                 value: formattedTotal,
             },
-            description: `Order #${order.id}`,
+            orderNumber: `ORD-${order.id}`,
+            lines: items.map((item: any) => {
+                const itemTotal = item.price * item.quantity;
+                const vatRate = "21.00";
+                // Calculate VAT amount from total (inclusive)
+                const vatAmount = (itemTotal - (itemTotal / 1.21)).toFixed(2);
+
+                return {
+                    type: 'physical',
+                    sku: item.id,
+                    name: item.name,
+                    imageUrl: item.image,
+                    productUrl: `${baseUrl}/shop`,
+                    quantity: item.quantity,
+                    vatRate: vatRate,
+                    vatAmount: {
+                        currency: 'EUR',
+                        value: vatAmount
+                    },
+                    unitPrice: {
+                        currency: 'EUR',
+                        value: item.price.toFixed(2)
+                    },
+                    totalAmount: {
+                        currency: 'EUR',
+                        value: itemTotal.toFixed(2)
+                    },
+                    discountAmount: {
+                        currency: 'EUR',
+                        value: '0.00'
+                    },
+                    category: 'eco' // Crucial for EcoChèques
+                };
+            }),
+            billingAddress: {
+                givenName: customerDetails.firstName,
+                familyName: customerDetails.lastName,
+                email: customerDetails.email,
+                streetAndNumber: `${customerDetails.address} ${customerDetails.apartment || ''}`.trim(),
+                postalCode: customerDetails.postalCode,
+                city: customerDetails.city,
+                country: customerDetails.country && customerDetails.country.length === 2 ? customerDetails.country.toUpperCase() : 'BE', // Fallback to BE if invalid
+            },
             redirectUrl: `${baseUrl}/payment/status?orderId=${order.id}`,
             metadata: {
                 order_id: order.id,
             },
+            locale: 'fr_BE',
         };
 
         // Only add webhook URL if not on localhost (Mollie can't reach localhost)
         if (!baseUrl.includes('localhost')) {
-            paymentPayload.webhookUrl = `${baseUrl}/api/webhook/mollie`;
+            orderPayload.webhookUrl = `${baseUrl}/api/webhook/mollie`;
         }
 
-        // If cardToken is provided (from Mollie Components), add it
-        if (body.cardToken) {
-            paymentPayload.cardToken = body.cardToken;
-            paymentPayload.method = 'creditcard'; // Required when using cardToken
-        }
+        // Use orders.create instead of payments.create
+        const mollieOrder = await mollieClient.orders.create(orderPayload);
 
-        const payment = await mollieClient.payments.create(paymentPayload);
-
-        // 4. Update Order with Payment ID
+        // 4. Update Order with Mollie Order ID
+        // We store it in mollie_payment_id for now as it serves the same purpose of tracking the transaction
         await supabase
             .from('orders')
-            .update({ mollie_payment_id: payment.id })
+            .update({ mollie_payment_id: mollieOrder.id })
             .eq('id', order.id);
 
-        return NextResponse.json({ checkoutUrl: payment.getCheckoutUrl() });
+        return NextResponse.json({ checkoutUrl: mollieOrder.getCheckoutUrl() });
 
     } catch (error: any) {
         console.error("Checkout Error:", error);
